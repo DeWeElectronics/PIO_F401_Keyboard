@@ -168,6 +168,10 @@ uint32_t USBD_Keyboard_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid,
     { // normal non-printing
         k &= 0xFFU;
     }
+    else if ((k & KEY_TYPE_MASK) == KEY_TYPE_KEYPAD)
+    { // normal non-printing
+        k &= 0xFFU;
+    }
     else if ((k & KEY_TYPE_MASK) == SHIFT)
     { // ascii
         k = _asciimap[k & 0xffU];
@@ -208,6 +212,10 @@ uint32_t USBD_Keyboard_release(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHi
         return retVal;
     }
     else if ((k & KEY_TYPE_MASK) == KEY_TYPE_NONPRINT)
+    { // normal non-printing
+        k &= 0xFFU;
+    }
+    else if ((k & KEY_TYPE_MASK) == KEY_TYPE_KEYPAD)
     { // normal non-printing
         k &= 0xFFU;
     }
