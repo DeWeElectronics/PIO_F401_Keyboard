@@ -8,7 +8,7 @@ click the image below to watch the build video on youtube.
 
 This keyboard is powered with a STM32F401CC board (a.k.a black pill F401CC)
 
-![image](https://user-images.githubusercontent.com/103286009/171075774-e85a7d94-5f6c-4caf-abea-434bbc42154b.png)
+![image](https://user-images.githubusercontent.com/103286009/171075902-7126eb22-004f-4269-a140-b180b1e2b72b.png)
 
 To build this project, simply clone this project and build it in vscode with PlatformIO IDE
 
