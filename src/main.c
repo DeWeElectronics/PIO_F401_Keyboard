@@ -27,6 +27,7 @@
 #include "GPIO_Config.h"
 #include "keyboard_map.h"
 #include "string.h"
+#include "stdlib.h"
 // #include "keyboard_map.h"
 /* USER CODE END Includes */
 
@@ -66,17 +67,19 @@ static void MX_TIM3_Init(void);
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
-volatile HID_StateTypeDef USBD_Keyboard_State()
-{
-    return ((volatile USBD_HID_HandleTypeDef*)hUsbDeviceFS.pClassData)->state;
-}
+#define USBD_Keyboard_State() (((volatile USBD_HID_HandleTypeDef*)hUsbDeviceFS.pClassData)->state)
 
-PinId_t* colPins[15] = {
+
+#define COLS 15U
+#define ROWS 5U
+
+PinId_t* colPins[COLS] = {
     PA0, PA1, PA2, PA3, PA4,
     PA5, PA6, PA7, PB0, PB9,
-    PB8, PB15, PB14, PB5, PB4};
+    PB8, PB15, PB14, PB5, PB4
+};
 
-PinId_t* rowPins[5] = {
+PinId_t* rowPins[ROWS] = {
     PA8,
     PA9,
     PA10,
@@ -84,10 +87,14 @@ PinId_t* rowPins[5] = {
     PB3,
 };
 
-KeyboardHID_t myHID = {1};
-MediaHID_t myMedia = {2};
-uint16_t Pressed[75] = {0};
-uint16_t TimeOut[75] = {0};
+#define HID_NORMAL_ID 1U
+#define HID_MEDIA_ID 2U
+#define FN_KEY 70U
+
+KeyboardHID_t myHID = {HID_NORMAL_ID};
+MediaHID_t myMedia  = {HID_MEDIA_ID};
+uint16_t Pressed[ROWS*COLS] = {0};
+uint16_t TimeOut[ROWS*COLS] = {0};
 
 void keyboardService()
 {
@@ -97,21 +104,26 @@ void keyboardService()
     static int clean = 0;
     static uint8_t shitActivate = 0;
     static int textPos = 0;
-    for(int i = 0; i < 5; i++)
+    static int npressed = 0;
+
+    // scan matrix
+    for(int i = 0; i < ROWS; i++)
     {
         PinId_Write(rowPins[i], 0);
         volatile uint32_t j = 0;
         for(; j < 10; j++)
             ;
-        for(j = 0; j < 15; j++)
+        for(j = 0; j < COLS; j++)
         {
             uint32_t pos = i * 15 + j;
-            if(!PinId_Read(colPins[j]))
+            int col_pressed = !PinId_Read(colPins[j]);
+
+            // set/unset alternate mode
+            if(pos == FN_KEY) { alternate = col_pressed; continue; }
+
+            if(col_pressed)
             {
-                if(pos == 70) 
-                {
-                    alternate = 1; continue;
-                }
+                // shit mode toggle on press (press and release alt key and column 14 of each row simultaneously)
                 if(j == 14)
                 {
                     shitActivate |= (1U << i);
@@ -122,28 +134,25 @@ void keyboardService()
                     }
                 }
                 
-                uint16_t key = keys[pos];
-                if(alternate && keys_alternate[pos] != 0)
-                {
-                    key = keys_alternate[pos];
-                }
+                // if alternate mode is on and alternate key is defined
+                uint16_t key = (alternate && keys_alternate[pos] != 0)? keys_alternate[pos] : keys[pos];
+
+                // press key 
+                // if key of 'pos' is free and not in debounce timeout
                 if(Pressed[pos] == 0 && TimeOut[pos] == 0)
                 {
                     if(USBD_Keyboard_press(&myHID, &myMedia, key) == key)
                     {
-                        update |= ((key & 0xff00) == 0x8000)? 8U : 4U;
-                        Pressed[pos] = key;
-                        update |= 1U;
+                        update |= ((key & KEY_TYPE_MASK) == KEY_TYPE_MEDIA)? 8U : 4U; // update HID Type
+                        update |= 1U;   // update pressed flag
+                        Pressed[pos] = key; // assign key to pressed array
+                        npressed++;
                     }
                 }
             }
             else
             {
-                if(pos == 70) 
-                {
-                    alternate = 0; continue;
-                }
-                
+                // shit mode toggle on release (press and release alt key and column 14 of each row simultaneously)
                 if(j == 14)
                 {
                     shitActivate &= ~(1U << i);
@@ -157,66 +166,89 @@ void keyboardService()
                     }
                 }
 
+                // decrement key timer
                 TimeOut[pos] = TimeOut[pos] > 0? (TimeOut[pos] - 1) : 0;
+
+                // release key
                 if(Pressed[pos] != 0)
                 {
                     if(USBD_Keyboard_release(&myHID, &myMedia, Pressed[pos]) == Pressed[pos])
                     {
-                        update |= ((Pressed[pos] & 0xff00) == 0x8000)? 8U : 4U;
-                        Pressed[pos] = 0;
-                        update |= 2U;
-                        TimeOut[pos] = TIMEOUT_MS;
+                        // update HID Type
+                        update |= ((Pressed[pos] & KEY_TYPE_MASK) == KEY_TYPE_MEDIA)? 8U : 4U; 
+                        update |= 2U; // update release flag
+                        Pressed[pos] = 0; // unassign key from pressed array
+                        TimeOut[pos] = TIMEOUT_MS; // set debounce timeout
+                        npressed--;
                     }
                 }
             }
         }
         PinId_Write(rowPins[i], 1);
     }
+    static uint32_t shitTimer = 0;
+    if (shit == 3)
+    {
+        if ((HAL_GetTick() - shitTimer >= 500) && npressed > 0)
+        {
+            update |= 1U;
+            shitTimer = HAL_GetTick() - (500);
+        }
+        else if (npressed == 0)
+        {
+            shitTimer = HAL_GetTick();
+            textPos %= size_txt; 
+        }
+    }
     
-    if(update & 3U)
+    // send report
+    if (update & 3U)
     {
         if(clean)
         {
-            uint8_t tmp[9] = {1, 0, 0, 0, 0, 0, 0, 0, 0};
+            uint8_t tmp[9] = {HID_NORMAL_ID, 0, 0, 0, 0, 0, 0, 0, 0};
+            uint8_t tmp1[3] = {HID_MEDIA_ID, 0, 0};
             USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)tmp, 9);
-            while(((volatile USBD_HID_HandleTypeDef*)hUsbDeviceFS.pClassData)->state != HID_IDLE)
+            while(USBD_Keyboard_State() != HID_IDLE)
                     ;
-            uint8_t tmp1[3] = {2, 0, 0};
             USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)tmp1, 3);
-            while(((volatile USBD_HID_HandleTypeDef*)hUsbDeviceFS.pClassData)->state != HID_IDLE)
+            while(USBD_Keyboard_State() != HID_IDLE)
                     ;
             clean = 0;
         }
-        if(((update & 1U) == 1U) && shit == 3)
+        if(((update & 1U) == 1U) && shit == 3) // shit mode
         {
-            KeyboardHID_t shitHID = {1, 0, 0, {0, 0, 0, 0, 0, 0}};
-            MediaHID_t shitMedia = {2, {0, 0}};
-            USBD_Keyboard_press(&shitHID, &shitMedia, txt[textPos]);
-            textPos = (textPos + 1) % size_txt; 
-            USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&shitHID, sizeof(shitHID));
-            while(((volatile USBD_HID_HandleTypeDef*)hUsbDeviceFS.pClassData)->state != HID_IDLE)
+            // new HID instance
+            KeyboardHID_t shitHID = {HID_NORMAL_ID, 0, 0, {0, 0, 0, 0, 0, 0}};
+            MediaHID_t shitMedia = {HID_MEDIA_ID, {0, 0}};
+            // press
+            if(textPos < size_txt)
+            {
+                USBD_Keyboard_press(&shitHID, &shitMedia, txt[textPos++]);
+                USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&shitHID, sizeof(shitHID));
+                while(USBD_Keyboard_State() != HID_IDLE)
+                        ;
+                // release
+                USBD_Keyboard_releaseAll(&shitHID, &shitMedia);
+                USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&shitHID, sizeof(shitHID));
+                while(USBD_Keyboard_State() != HID_IDLE)
                     ;
-            USBD_Keyboard_releaseAll(&shitHID, &shitMedia);
-            USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&shitHID, sizeof(shitHID));
-            while(((volatile USBD_HID_HandleTypeDef*)hUsbDeviceFS.pClassData)->state != HID_IDLE)
-                    ;
+            }
         }
         else if (shit == 0)
         {
-            if(update & 8U)
+            if(update & 8U) // media key
             {
-                myMedia.ID = 2;
-                if(myMedia.KEYCODE[0] == 0xe9)
-                    GPIOC->ODR ^= (1U << 13U);
+                myMedia.ID = HID_MEDIA_ID;
                 USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&myMedia, sizeof(myMedia));
-                while(((volatile USBD_HID_HandleTypeDef*)hUsbDeviceFS.pClassData)->state != HID_IDLE)
+                while(USBD_Keyboard_State() != HID_IDLE)
                         ;
             }
-            if(update & 4U)
+            if(update & 4U) // normal key
             {
-                myHID.ID = 1;
+                myHID.ID = HID_NORMAL_ID;
                 USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&myHID, sizeof(myHID));
-                while(((volatile USBD_HID_HandleTypeDef*)hUsbDeviceFS.pClassData)->state != HID_IDLE)
+                while(USBD_Keyboard_State() != HID_IDLE)
                         ;
             }
         }
@@ -224,9 +256,13 @@ void keyboardService()
     }
 }
 
+volatile uint32_t LED_toggle = 0U;
+
 void __attribute__((optimize("-O0"))) HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) 
 {
-    // if(htim == &htim3)
+    
+    if(htim == &htim3)
+        GPIOC->ODR ^= (LED_toggle << 13U);
     // NVIC_DisableIRQ(TIM3_IRQn);
     // keyboardService();
     // NVIC_EnableIRQ(TIM3_IRQn);
@@ -268,11 +304,15 @@ int __attribute__((optimize("-O0"))) main(void)
     MX_TIM3_Init();
     MX_USB_DEVICE_Init();
     /* USER CODE BEGIN 2 */
-    TIM3->PSC = (84000000 / 1000000) - 1;
-    TIM3->ARR = (1000000 / 1000) - 1;
+    TIM3->PSC = (84000000 / 10000) - 1;
+    TIM3->ARR = (10000 / 1) - 1;
     NVIC_SetPriority(OTG_FS_IRQn, 6);
     NVIC_SetPriority(TIM3_IRQn, 67);
     HAL_TIM_Base_Start_IT(&htim3);
+
+    while(USBD_Keyboard_State() != HID_IDLE)
+        ;
+    LED_toggle = 1U;
 
     /* USER CODE END 2 */
 
@@ -405,7 +445,7 @@ static void MX_GPIO_Init(void)
 
     /*Configure GPIO pins : PB0 PB4 PB5 PB6
                              PB7 PB8 PB9 */
-    GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_14 | GPIO_PIN_15 | GPIO_PIN_8 | GPIO_PIN_9;
+    GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
