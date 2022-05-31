@@ -4,7 +4,7 @@ a DIY attempt of a 68 key style mechanical keyboard.
 
 ![image](https://user-images.githubusercontent.com/103286009/171072225-c393b0a1-e99a-41db-9dae-a7502b0eaaeb.png)
 
-[![Youtube Video](https://img.youtube.com/vi/smThnvXJ02c/maxresdefault.jpg)](https://www.youtube.com/watch?v=smThnvXJ02c)
+<iframe width="1280" height="720" src="https://www.youtube.com/embed/smThnvXJ02c" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 This keyboard is powered with a STM32F401CC board (a.k.a black pill F401CC)
 
