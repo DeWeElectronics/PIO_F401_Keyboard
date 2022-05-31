@@ -8,137 +8,136 @@
  * 0x80XX -> Media
 */
 
-#define SHIFT 0x0300U
 const uint16_t _asciimap[128] =
 {
-    0x00, // NUL
-    0x00, // SOH
-    0x00, // STX
-    0x00, // ETX
-    0x00, // EOT
-    0x00, // ENQ
-    0x00, // ACK
-    0x00, // BEL
-    0x2a, // BS	Backspace
-    0x2b, // TAB	Tab
-    0x28, // LF	Enter
-    0x00, // VT
-    0x00, // FF
-    0x00, // CR
-    0x00, // SO
-    0x00, // SI
-    0x00, // DEL
-    0x00, // DC1
-    0x00, // DC2
-    0x00, // DC3
-    0x00, // DC4
-    0x00, // NAK
-    0x00, // SYN
-    0x00, // ETB
-    0x00, // CAN
-    0x00, // EM
-    0x00, // SUB
-    0x00, // ESC
-    0x00, // FS
-    0x00, // GS
-    0x00, // RS
-    0x00, // US
-    0x2c,         //  ' '
-    0x1e | SHIFT, // !
-    0x34 | SHIFT, // "
-    0x20 | SHIFT, // #
-    0x21 | SHIFT, // $
-    0x22 | SHIFT, // %
-    0x24 | SHIFT, // &
-    0x34,         // '
-    0x26 | SHIFT, // (
-    0x27 | SHIFT, // )
-    0x25 | SHIFT, // *
-    0x2e | SHIFT, // +
-    0x36,         // ,
-    0x2d,         // -
-    0x37,         // .
-    0x38,         // /
-    0x27,         // 0
-    0x1e,         // 1
-    0x1f,         // 2
-    0x20,         // 3
-    0x21,         // 4
-    0x22,         // 5
-    0x23,         // 6
-    0x24,         // 7
-    0x25,         // 8
-    0x26,         // 9
-    0x33 | SHIFT, // :
-    0x33,         // ;
-    0x36 | SHIFT, // <
-    0x2e,         // =
-    0x37 | SHIFT, // >
-    0x38 | SHIFT, // ?
-    0x1f | SHIFT, // @
-    0x04 | SHIFT, // A
-    0x05 | SHIFT, // B
-    0x06 | SHIFT, // C
-    0x07 | SHIFT, // D
-    0x08 | SHIFT, // E
-    0x09 | SHIFT, // F
-    0x0a | SHIFT, // G
-    0x0b | SHIFT, // H
-    0x0c | SHIFT, // I
-    0x0d | SHIFT, // J
-    0x0e | SHIFT, // K
-    0x0f | SHIFT, // L
-    0x10 | SHIFT, // M
-    0x11 | SHIFT, // N
-    0x12 | SHIFT, // O
-    0x13 | SHIFT, // P
-    0x14 | SHIFT, // Q
-    0x15 | SHIFT, // R
-    0x16 | SHIFT, // S
-    0x17 | SHIFT, // T
-    0x18 | SHIFT, // U
-    0x19 | SHIFT, // V
-    0x1a | SHIFT, // W
-    0x1b | SHIFT, // X
-    0x1c | SHIFT, // Y
-    0x1d | SHIFT, // Z
-    0x2f,         // [
-    0x31,         // bslash
-    0x30,         // ]
-    0x23 | SHIFT, // ^
-    0x2d | SHIFT, // _
-    0x35,         // `
-    0x04,         // a
-    0x05,         // b
-    0x06,         // c
-    0x07,         // d
-    0x08,         // e
-    0x09,         // f
-    0x0a,         // g
-    0x0b,         // h
-    0x0c,         // i
-    0x0d,         // j
-    0x0e,         // k
-    0x0f,         // l
-    0x10,         // m
-    0x11,         // n
-    0x12,         // o
-    0x13,         // p
-    0x14,         // q
-    0x15,         // r
-    0x16,         // s
-    0x17,         // t
-    0x18,         // u
-    0x19,         // v
-    0x1a,         // w
-    0x1b,         // x
-    0x1c,         // y
-    0x1d,         // z
-    0x2f | SHIFT, // {
-    0x31 | SHIFT, // |
-    0x30 | SHIFT, // }
-    0x35 | SHIFT, // ~
-    0             // DEL
+    0x00U, // NUL
+    0x00U, // SOH
+    0x00U, // STX
+    0x00U, // ETX
+    0x00U, // EOT
+    0x00U, // ENQ
+    0x00U, // ACK
+    0x00U, // BEL
+    0x2aU, // BS	Backspace
+    0x2bU, // TAB	Tab
+    0x28U, // LF	Enter
+    0x00U, // VT
+    0x00U, // FF
+    0x00U, // CR
+    0x00U, // SO
+    0x00U, // SI
+    0x00U, // DEL
+    0x00U, // DC1
+    0x00U, // DC2
+    0x00U, // DC3
+    0x00U, // DC4
+    0x00U, // NAK
+    0x00U, // SYN
+    0x00U, // ETB
+    0x00U, // CAN
+    0x00U, // EM
+    0x00U, // SUB
+    0x00U, // ESC
+    0x00U, // FS
+    0x00U, // GS
+    0x00U, // RS
+    0x00U, // US
+    0x2cU,         //  ' '
+    0x1eU | SHIFT, // !
+    0x34U | SHIFT, // "
+    0x20U | SHIFT, // #
+    0x21U | SHIFT, // $
+    0x22U | SHIFT, // %
+    0x24U | SHIFT, // &
+    0x34U,         // '
+    0x26U | SHIFT, // (
+    0x27U | SHIFT, // )
+    0x25U | SHIFT, // *
+    0x2eU | SHIFT, // +
+    0x36U,         // ,
+    0x2dU,         // -
+    0x37U,         // .
+    0x38U,         // /
+    0x27U,         // 0
+    0x1eU,         // 1
+    0x1fU,         // 2
+    0x20U,         // 3
+    0x21U,         // 4
+    0x22U,         // 5
+    0x23U,         // 6
+    0x24U,         // 7
+    0x25U,         // 8
+    0x26U,         // 9
+    0x33U | SHIFT, // :
+    0x33U,         // ;
+    0x36U | SHIFT, // <
+    0x2eU,         // =
+    0x37U | SHIFT, // >
+    0x38U | SHIFT, // ?
+    0x1fU | SHIFT, // @
+    0x04U | SHIFT, // A
+    0x05U | SHIFT, // B
+    0x06U | SHIFT, // C
+    0x07U | SHIFT, // D
+    0x08U | SHIFT, // E
+    0x09U | SHIFT, // F
+    0x0aU | SHIFT, // G
+    0x0bU | SHIFT, // H
+    0x0cU | SHIFT, // I
+    0x0dU | SHIFT, // J
+    0x0eU | SHIFT, // K
+    0x0fU | SHIFT, // L
+    0x10U | SHIFT, // M
+    0x11U | SHIFT, // N
+    0x12U | SHIFT, // O
+    0x13U | SHIFT, // P
+    0x14U | SHIFT, // Q
+    0x15U | SHIFT, // R
+    0x16U | SHIFT, // S
+    0x17U | SHIFT, // T
+    0x18U | SHIFT, // U
+    0x19U | SHIFT, // V
+    0x1aU | SHIFT, // W
+    0x1bU | SHIFT, // X
+    0x1cU | SHIFT, // Y
+    0x1dU | SHIFT, // Z
+    0x2fU,         // [
+    0x31U,         // bslash
+    0x30U,         // ]
+    0x23U | SHIFT, // ^
+    0x2dU | SHIFT, // _
+    0x35U,         // `
+    0x04U,         // a
+    0x05U,         // b
+    0x06U,         // c
+    0x07U,         // d
+    0x08U,         // e
+    0x09U,         // f
+    0x0aU,         // g
+    0x0bU,         // h
+    0x0cU,         // i
+    0x0dU,         // j
+    0x0eU,         // k
+    0x0fU,         // l
+    0x10U,         // m
+    0x11U,         // n
+    0x12U,         // o
+    0x13U,         // p
+    0x14U,         // q
+    0x15U,         // r
+    0x16U,         // s
+    0x17U,         // t
+    0x18U,         // u
+    0x19U,         // v
+    0x1aU,         // w
+    0x1bU,         // x
+    0x1cU,         // y
+    0x1dU,         // z
+    0x2fU | SHIFT, // {
+    0x31U | SHIFT, // |
+    0x30U | SHIFT, // }
+    0x35U | SHIFT, // ~
+    0x00U             // DEL
 };
 
 uint16_t keys[] = {
@@ -160,27 +159,27 @@ uint16_t keys_alternate[] = {
 uint32_t USBD_Keyboard_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint16_t k)
 {
     uint8_t i; uint16_t retVal = k;
-    if ((k & 0xff00) == 0x100)
+    if ((k & KEY_TYPE_MASK) == KEY_TYPE_MODIF)
     { // it's a modifier key
         pKeyboardHid->MODIFIER |= (k & 0xff);
         return retVal;
     }
-    else if ((k & 0xff00) == 0x200)
+    else if ((k & KEY_TYPE_MASK) == KEY_TYPE_NONPRINT)
     { // normal non-printing
         k &= 0xFFU;
     }
-    else if ((k & 0xff00) == 0x0300U)
+    else if ((k & KEY_TYPE_MASK) == SHIFT)
     { // ascii
         k = _asciimap[k & 0xffU];
         pKeyboardHid->MODIFIER |= (KEY_LEFT_SHIFT & 0xff);
     }
-    else if ((k & 0xff00) == 0x0U)
+    else if ((k & KEY_TYPE_MASK) == 0x0U)
     { // ascii
         k = _asciimap[k & 0xffU];
-        if ((k & 0xff00) == SHIFT)
+        if ((k & KEY_TYPE_MASK) == SHIFT)
             pKeyboardHid->MODIFIER |= (KEY_LEFT_SHIFT & 0xff);
     }
-    else if ((k & 0xff00) == 0x8000)
+    else if ((k & KEY_TYPE_MASK) == KEY_TYPE_MEDIA)
     { // media
         if(pMediaHid->KEYCODE[0] == 0)
             pMediaHid->KEYCODE[0] = k & 0xffU;
@@ -203,27 +202,27 @@ uint32_t USBD_Keyboard_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid,
 uint32_t USBD_Keyboard_release(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint16_t k)
 {
     uint8_t i; uint16_t retVal = k;
-    if ((k & 0xff00) == 0x100)
+    if ((k & KEY_TYPE_MASK) == KEY_TYPE_MODIF)
     { // it's a modifier key
         pKeyboardHid->MODIFIER &= ~(k & 0xff);
         return retVal;
     }
-    else if ((k & 0xff00) == 0x200)
+    else if ((k & KEY_TYPE_MASK) == KEY_TYPE_NONPRINT)
     { // normal non-printing
         k &= 0xFFU;
     }
-    else if ((k & 0xff00) == 0x0300U)
+    else if ((k & KEY_TYPE_MASK) == SHIFT)
     { // ascii
         k = _asciimap[k & 0xffU];
         pKeyboardHid->MODIFIER &= ~(KEY_LEFT_SHIFT & 0xff);
     }
-    else if ((k & 0xff00) == 0x0U)
+    else if ((k & KEY_TYPE_MASK) == 0x0U)
     { // ascii
         k = _asciimap[k & 0xffU];
-        if ((k & 0xff00) == SHIFT)
+        if ((k & KEY_TYPE_MASK) == SHIFT)
             pKeyboardHid->MODIFIER &= ~(KEY_LEFT_SHIFT & 0xff);
     }
-    else if ((k & 0xff00) == 0x8000)
+    else if ((k & KEY_TYPE_MASK) == KEY_TYPE_MEDIA)
     { // media
         if(pMediaHid->KEYCODE[0] == (k & 0xffU))
             pMediaHid->KEYCODE[0] = 0;
