@@ -1,8 +1,10 @@
-# PIO_F401_Keyboard
+# STM32 Mechanical Keyboard
 
 a DIY attempt of a 68 key style mechanical keyboard.
 
 ![image](https://user-images.githubusercontent.com/103286009/171072225-c393b0a1-e99a-41db-9dae-a7502b0eaaeb.png)
+
+Youtube : https://www.youtube.com/watch?v=smThnvXJ02c
 
 This keyboard is powered with a STM32F401CC board (a.k.a black pill F401CC)
 
