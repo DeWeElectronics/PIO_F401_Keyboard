@@ -115,7 +115,7 @@ void keyboardService()
             ;
         for(j = 0; j < COLS; j++)
         {
-            uint32_t pos = i * 15 + j;
+            uint32_t pos = i * COLS + j;
             int col_pressed = !PinId_Read(colPins[j]);
 
             // set/unset alternate mode
