@@ -1,14 +1,17 @@
 #include "keyboard_map.h"
 
 /*
- * 0x00XX -> Normal
- * 0x01XX -> Modifier
- * 0x02XX -> Normal Non-printing
- * 0x03XX -> ASCII Shift
- * 0x80XX -> Media
+ * 0x000000XX -> Normal
+ * 0x010000XX -> Modifier
+ * 0x020000XX -> Normal Non-printing
+ * 0x030000XX -> ASCII Shift
+ * 0x800000XX -> Media
 */
 
-const uint16_t _asciimap[128] =
+
+
+
+const uint32_t _asciimap[128] =
 {
     0x00U, // NUL
     0x00U, // SOH
@@ -140,7 +143,7 @@ const uint16_t _asciimap[128] =
     0x00U             // DEL
 };
 
-uint16_t keys[] = {
+uint32_t keys[] = {
     KEY_ESC,        '1',      '2',      '3',     '4',      '5',      '6',      '7',      '8',      '9',      '0',      '-',        '=',             KEY_BACKSPACE,  '`',
     KEY_TAB,        'q',      'w',      'e',     'r',      't',      'y',      'u',      'i',      'o',      'p',      '[',        ']',             '\\',           KEY_DELETE,
     KEY_CAPS_LOCK,  'a',      's',      'd',     'f',      'g',      'h',      'j',      'k',      'l',      ';',      '\'',       0x00,            KEY_RETURN,     KEY_PAGE_UP,
@@ -148,27 +151,48 @@ uint16_t keys[] = {
     KEY_LEFT_CTRL,  KEY_LEFT_GUI, KEY_LEFT_ALT, 0x00, 0x00, ' ',     0x00,     0x00,     0x00, KEY_RIGHT_ALT, 0x00, KEY_RIGHT_CTRL, KEY_LEFT_ARROW, KEY_DOWN_ARROW, KEY_RIGHT_ARROW,
 };
  
-uint16_t keys_alternate[] = { 
+uint32_t keys_alternate[] = { 
     0x00, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11,         KEY_F12,        KEY_MEDIA_STOP,     KEY_PRTSC, 
-    0x00, 0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,    KEY_MEDIA_PREV,  KEY_MEDIA_NEXT, KEY_MEDIA_MUTE,     KEY_INSERT,
+    0x00, 0x00,   0x00,   KEY_MEDIA_EMAIL,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,    KEY_MEDIA_PREV,  KEY_MEDIA_NEXT, KEY_MEDIA_MUTE,     KEY_INSERT,
     0x00, 0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,    0x00,            0x00,           KEY_MEDIA_PAUSE,    KEY_HOME,
-    0x00, 0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,    0x00,            0x00,           KEY_MEDIA_VOLUP,    KEY_END,
+    0x00, 0x00,   0x00,   KEY_MEDIA_CALC,   0x00,   KEY_MEDIA_WWW_HOME,   0x00,   KEY_CONSUMER_CTL,   0x00,   0x00,   0x00,    0x00,            0x00,           KEY_MEDIA_VOLUP,    KEY_END,
     0x00, 0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,    0x00,            0x00,           KEY_MEDIA_VOLDN,    0x00,
 };
 
-uint32_t USBD_Keyboard_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint16_t k)
+size_t Media_Press(MediaHID_t* pMediaHid, const MediaKeyReport k)
 {
-    uint8_t i; uint16_t retVal = k;
+    uint16_t k_16 = k;
+    // {8, 0} -> 0 | (8U << 8)
+    uint16_t mediaKeyReport_16 = pMediaHid->KEYCODE[1] | (pMediaHid->KEYCODE[0] << 8);
+
+    mediaKeyReport_16 |= k_16;
+    pMediaHid->KEYCODE[0] = (uint8_t)((mediaKeyReport_16 & 0xFF00) >> 8);
+    pMediaHid->KEYCODE[1] = (uint8_t)(mediaKeyReport_16 & 0x00FF);
+
+    return 1;
+}
+
+size_t Media_Release(MediaHID_t* pMediaHid, const MediaKeyReport k)
+{
+    uint16_t k_16 = k;
+    uint16_t mediaKeyReport_16 = pMediaHid->KEYCODE[1] | (pMediaHid->KEYCODE[0] << 8);
+    
+    mediaKeyReport_16 &= ~k_16;
+    pMediaHid->KEYCODE[0] = (uint8_t)((mediaKeyReport_16 & 0xFF00) >> 8);
+    pMediaHid->KEYCODE[1] = (uint8_t)(mediaKeyReport_16 & 0x00FF);
+
+    return 1;
+}
+
+uint32_t USBD_Keyboard_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint32_t k)
+{
+    uint8_t i; uint32_t retVal = k;
     if ((k & KEY_TYPE_MASK) == KEY_TYPE_MODIF)
     { // it's a modifier key
         pKeyboardHid->MODIFIER |= (k & 0xff);
         return retVal;
     }
     else if ((k & KEY_TYPE_MASK) == KEY_TYPE_NONPRINT)
-    { // normal non-printing
-        k &= 0xFFU;
-    }
-    else if ((k & KEY_TYPE_MASK) == KEY_TYPE_KEYPAD)
     { // normal non-printing
         k &= 0xFFU;
     }
@@ -185,9 +209,12 @@ uint32_t USBD_Keyboard_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid,
     }
     else if ((k & KEY_TYPE_MASK) == KEY_TYPE_MEDIA)
     { // media
-        if(pMediaHid->KEYCODE[0] == 0)
-            pMediaHid->KEYCODE[0] = k & 0xffU;
+        Media_Press(pMediaHid, (k & 0xffffUL));
         return k;
+    }
+    else if ((k & KEY_TYPE_MASK) == KEY_TYPE_KEYPAD)
+    { // media
+        k = k & 0xffUL;
     }
     else if (!k)
         return 0;
@@ -203,19 +230,15 @@ uint32_t USBD_Keyboard_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid,
     return 0;
 }
 
-uint32_t USBD_Keyboard_release(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint16_t k)
+uint32_t USBD_Keyboard_release(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint32_t k)
 {
-    uint8_t i; uint16_t retVal = k;
+    uint8_t i; uint32_t retVal = k;
     if ((k & KEY_TYPE_MASK) == KEY_TYPE_MODIF)
     { // it's a modifier key
         pKeyboardHid->MODIFIER &= ~(k & 0xff);
         return retVal;
     }
     else if ((k & KEY_TYPE_MASK) == KEY_TYPE_NONPRINT)
-    { // normal non-printing
-        k &= 0xFFU;
-    }
-    else if ((k & KEY_TYPE_MASK) == KEY_TYPE_KEYPAD)
     { // normal non-printing
         k &= 0xFFU;
     }
@@ -232,9 +255,12 @@ uint32_t USBD_Keyboard_release(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHi
     }
     else if ((k & KEY_TYPE_MASK) == KEY_TYPE_MEDIA)
     { // media
-        if(pMediaHid->KEYCODE[0] == (k & 0xffU))
-            pMediaHid->KEYCODE[0] = 0;
+        Media_Release(pMediaHid, (k & 0xffffU));
         return k;
+    }
+    else if ((k & KEY_TYPE_MASK) == KEY_TYPE_KEYPAD)
+    { // media
+        k = k & 0xffUL;
     }
     else if (!k)
         return 0;

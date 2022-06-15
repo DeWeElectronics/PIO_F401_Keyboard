@@ -93,7 +93,7 @@ PinId_t* rowPins[ROWS] = {
 
 KeyboardHID_t myHID = {HID_NORMAL_ID};
 MediaHID_t myMedia  = {HID_MEDIA_ID};
-uint16_t Pressed[ROWS*COLS] = {0};
+uint32_t Pressed[ROWS*COLS] = {0};
 uint16_t TimeOut[ROWS*COLS] = {0};
 
 void keyboardService()
@@ -135,7 +135,7 @@ void keyboardService()
                 }
                 
                 // if alternate mode is on and alternate key is defined
-                uint16_t key = (alternate && keys_alternate[pos] != 0)? keys_alternate[pos] : keys[pos];
+                uint32_t key = (alternate && keys_alternate[pos] != 0)? keys_alternate[pos] : keys[pos];
 
                 // press key 
                 // if key of 'pos' is free and not in debounce timeout
