@@ -119,9 +119,6 @@ typedef struct
     uint8_t KEYCODE[2];
 } MediaHID_t;
 
-extern uint32_t keys_alternate[];
-extern uint32_t keys[];
-
 uint32_t USBD_Keyboard_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint32_t k);
 uint32_t USBD_Keyboard_release(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint32_t k);
 void USBD_Keyboard_releaseAll(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid);
