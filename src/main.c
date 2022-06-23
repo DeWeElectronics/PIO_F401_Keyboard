@@ -63,7 +63,8 @@ static void MX_TIM3_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-#define TIMEOUT_MS 20
+#define TIMEOUT_MS 100
+#define TIMEOUT_MAX 500
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
@@ -92,7 +93,9 @@ PinId_t* rowPins[ROWS] = {
 KeyboardHID_t myHID = {HID_NORMAL_ID};
 MediaHID_t myMedia = {HID_MEDIA_ID};
 uint32_t Pressed[ROWS * COLS] = {0};
-uint16_t TimeOut[ROWS * COLS] = {0};
+// uint16_t TimeOut[ROWS * COLS] = {0};
+uint32_t keyTimer[ROWS * COLS] = {0};
+uint32_t autoTypeMode[ROWS * COLS] = {0};
 
 void keyboardService() {
     static uint32_t update = 0;
@@ -112,6 +115,7 @@ void keyboardService() {
         for (j = 0; j < COLS; j++) {
             uint32_t pos = i * COLS + j;
             uint32_t col_pressed = !PinId_Read(colPins[j]);
+            uint32_t thisTick = HAL_GetTick();
 
             // set/unset alternate mode
             if (pos == FN_KEY) {
@@ -132,9 +136,18 @@ void keyboardService() {
                 // if alternate mode is on and alternate key is defined
                 uint32_t key = (alternate && keys_alternate[pos] != 0) ? keys_alternate[pos] : keys[pos];
 
+                if(keys_alternate[pos] == 0 && alternate) {
+                    switch(autoTypeMode[pos]) {
+                        case 0: autoTypeMode[pos] = 2; break;
+                        case 3: autoTypeMode[pos] = 1; break;
+                        default: break;
+                    }
+                }
+
                 // press key
                 // if key of 'pos' is free and not in debounce timeout
-                if (Pressed[pos] == 0 && TimeOut[pos] == 0) {
+                // if (Pressed[pos] == 0 && TimeOut[pos] == 0) {
+                if (Pressed[pos] == 0 && (thisTick - keyTimer[pos] >= TIMEOUT_MS)) {
                     if (USBD_Keyboard_press(&myHID, &myMedia, key) == key) {
                         update |= ((key & KEY_TYPE_MASK) == KEY_TYPE_MEDIA) ? 8U : 4U; // update HID Type
                         update |= 1U;                                                  // update pressed flag
@@ -142,7 +155,20 @@ void keyboardService() {
                         npressed++;
                     }
                 }
-            } else {
+                if ((autoTypeMode[pos] == 3) && (Pressed[pos] != 0) && (thisTick - keyTimer[pos] >= TIMEOUT_MAX)) {
+                    if (USBD_Keyboard_release(&myHID, &myMedia, Pressed[pos]) == Pressed[pos]) {
+                        // update HID Type
+                        update |= ((Pressed[pos] & KEY_TYPE_MASK) == KEY_TYPE_MEDIA) ? 8U : 4U;
+                        update |= 2U;              // update release flag
+                        Pressed[pos] = 0;          // unassign key from pressed array
+                        // TimeOut[pos] = TIMEOUT_MS; // set debounce timeout
+                        npressed--;
+                    }
+                    keyTimer[pos] = thisTick - TIMEOUT_MAX + 50;
+                }
+            } 
+            
+            if(!col_pressed) {
                 // shit mode toggle on release (press and release alt key and column 14 of each row simultaneously)
                 if (j == 14) {
                     shitActivate &= ~(1U << i);
@@ -155,8 +181,14 @@ void keyboardService() {
                     }
                 }
 
+                switch(autoTypeMode[pos]) {
+                    case 2: autoTypeMode[pos] = 3; break;
+                    case 1: autoTypeMode[pos] = 0; break;
+                    default: break;
+                }
+
                 // decrement key timer
-                TimeOut[pos] = TimeOut[pos] > 0 ? (TimeOut[pos] - 1) : 0;
+                // TimeOut[pos] = TimeOut[pos] > 0 ? (TimeOut[pos] - 1) : 0;
 
                 // release key
                 if (Pressed[pos] != 0) { // if key[pos] is pressed
@@ -165,11 +197,17 @@ void keyboardService() {
                         update |= ((Pressed[pos] & KEY_TYPE_MASK) == KEY_TYPE_MEDIA) ? 8U : 4U;
                         update |= 2U;              // update release flag
                         Pressed[pos] = 0;          // unassign key from pressed array
-                        TimeOut[pos] = TIMEOUT_MS; // set debounce timeout
+                        // TimeOut[pos] = TIMEOUT_MS; // set debounce timeout
                         npressed--;
                     }
+                    keyTimer[pos] = thisTick;
                 }
+                // keep the max difference of keyTimer and thisTick at TIMEOUT_MS (to avoid overflow)
+                keyTimer[pos] = (thisTick - keyTimer[pos] > TIMEOUT_MS)? 
+                                    (thisTick - TIMEOUT_MS) : keyTimer[pos];
             }
+            keyTimer[pos] = (thisTick - keyTimer[pos] > TIMEOUT_MAX)? 
+                                (thisTick - TIMEOUT_MAX) : keyTimer[pos];
         }
         PinId_Write(rowPins[i], 1);
     }
