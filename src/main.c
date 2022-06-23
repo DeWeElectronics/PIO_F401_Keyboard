@@ -68,6 +68,8 @@ static void MX_TIM3_Init(void);
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
+//#define ENABLE_AUTOTYPE
+
 #define USBD_Keyboard_State() (((volatile USBD_HID_HandleTypeDef*)hUsbDeviceFS.pClassData)->state)
 
 #define COLS 15U
@@ -90,12 +92,14 @@ PinId_t* rowPins[ROWS] = {
 #define HID_MEDIA_ID 2U
 #define FN_KEY 70U
 
+
 KeyboardHID_t myHID = {HID_NORMAL_ID};
 MediaHID_t myMedia = {HID_MEDIA_ID};
 uint32_t Pressed[ROWS * COLS] = {0};
-// uint16_t TimeOut[ROWS * COLS] = {0};
 uint32_t keyTimer[ROWS * COLS] = {0};
+#ifdef ENABLE_AUTOTYPER
 uint32_t autoTypeMode[ROWS * COLS] = {0};
+#endif //ENABLE_AUTOTYPER
 
 void keyboardService() {
     static uint32_t update = 0;
@@ -136,6 +140,7 @@ void keyboardService() {
                 // if alternate mode is on and alternate key is defined
                 uint32_t key = (alternate && keys_alternate[pos] != 0) ? keys_alternate[pos] : keys[pos];
 
+#ifdef ENABLE_AUTOTYPER
                 if(keys_alternate[pos] == 0 && alternate) {
                     switch(autoTypeMode[pos]) {
                         case 0: autoTypeMode[pos] = 2; break;
@@ -143,6 +148,7 @@ void keyboardService() {
                         default: break;
                     }
                 }
+#endif // ENABLE_AUTOTYPER
 
                 // press key
                 // if key of 'pos' is free and not in debounce timeout
@@ -155,6 +161,7 @@ void keyboardService() {
                         npressed++;
                     }
                 }
+#ifdef ENABLE_AUTOTYPER
                 if ((autoTypeMode[pos] == 3) && (Pressed[pos] != 0) && (thisTick - keyTimer[pos] >= TIMEOUT_MAX)) {
                     if (USBD_Keyboard_release(&myHID, &myMedia, Pressed[pos]) == Pressed[pos]) {
                         // update HID Type
@@ -166,8 +173,8 @@ void keyboardService() {
                     }
                     keyTimer[pos] = thisTick - TIMEOUT_MAX + 50;
                 }
+#endif // ENABLE_AUTOTYPER
             } 
-            
             if(!col_pressed) {
                 // shit mode toggle on release (press and release alt key and column 14 of each row simultaneously)
                 if (j == 14) {
@@ -181,14 +188,13 @@ void keyboardService() {
                     }
                 }
 
+#ifdef ENABLE_AUTOTYPER
                 switch(autoTypeMode[pos]) {
                     case 2: autoTypeMode[pos] = 3; break;
                     case 1: autoTypeMode[pos] = 0; break;
                     default: break;
                 }
-
-                // decrement key timer
-                // TimeOut[pos] = TimeOut[pos] > 0 ? (TimeOut[pos] - 1) : 0;
+#endif // ENABLE_AUTOTYPER
 
                 // release key
                 if (Pressed[pos] != 0) { // if key[pos] is pressed
@@ -197,7 +203,6 @@ void keyboardService() {
                         update |= ((Pressed[pos] & KEY_TYPE_MASK) == KEY_TYPE_MEDIA) ? 8U : 4U;
                         update |= 2U;              // update release flag
                         Pressed[pos] = 0;          // unassign key from pressed array
-                        // TimeOut[pos] = TIMEOUT_MS; // set debounce timeout
                         npressed--;
                     }
                     keyTimer[pos] = thisTick;
