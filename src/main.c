@@ -68,7 +68,7 @@ static void MX_TIM3_Init(void);
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
-//#define ENABLE_AUTOTYPE
+// #define ENABLE_AUTOTYPER
 
 #define USBD_Keyboard_State() (((volatile USBD_HID_HandleTypeDef*)hUsbDeviceFS.pClassData)->state)
 
@@ -195,7 +195,7 @@ void keyboardService() {
                     default: break;
                 }
 #endif // ENABLE_AUTOTYPER
-
+                
                 // release key
                 if (Pressed[pos] != 0) { // if key[pos] is pressed
                     if (USBD_Keyboard_release(&myHID, &myMedia, Pressed[pos]) == Pressed[pos]) {
@@ -216,6 +216,12 @@ void keyboardService() {
         }
         PinId_Write(rowPins[i], 1);
     }
+
+#ifdef ENABLE_AUTOTYPER
+    if (autoTypeMode[0] == 3)
+        clean = 1;
+#endif // ENABLE_AUTOTYPER
+    
     static uint32_t shitTimer = 0;
     if (shit == 3) {    // shit long press
         if ((HAL_GetTick() - shitTimer >= 500) && npressed > 0) {
@@ -230,6 +236,9 @@ void keyboardService() {
     // send report
     if (update & 3U) {
         if (clean) { // clean output
+#ifdef ENABLE_AUTOTYPER
+            memset(autoTypeMode, 0, sizeof(autoTypeMode));
+#endif // ENABLE_AUTOTYPER
             uint8_t tmp[9] = {HID_NORMAL_ID, 0, 0, 0, 0, 0, 0, 0, 0};
             uint8_t tmp1[3] = {HID_MEDIA_ID, 0, 0};
             USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)tmp, 9);
