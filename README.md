@@ -16,4 +16,4 @@ Note : Before building and flashing to the microcontroller, make sure that the k
 
 ![image](https://user-images.githubusercontent.com/103286009/171072490-12b0d3a3-1370-45db-9883-a4ab201bd165.png)
 
-or instead change the matrix pin definitions in src/main.c (rowPins and colPins) to fit your wiring
+or instead change the matrix pin definitions in src/keymap.c (rowPins and colPins) to fit your wiring
