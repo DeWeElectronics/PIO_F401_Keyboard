@@ -30,17 +30,17 @@ const uint32_t keys[] = {
  *     FN + PAGE UP        -> HOME
  *     FN + PAGE DOWN      -> END
  * Media Control:
- *     FN + backspace      -> MEDIA STOP
- *     FN + '[' -> MEDIA PREVIOUS
- *     FN + ']' -> MEDIA NEXT
- *     FN + '\' -> MEDIA MUTE
- *     FN + ENTER -> MEDIA PAUSE
- *     FN + UP ARROW -> MEDIA VOLUME UP
+ *     FN + backspace  -> MEDIA STOP
+ *     FN + '['        -> MEDIA PREVIOUS
+ *     FN + ']'        -> MEDIA NEXT
+ *     FN + '\'        -> MEDIA MUTE
+ *     FN + ENTER      -> MEDIA PAUSE
+ *     FN + UP ARROW   -> MEDIA VOLUME UP
  *     FN + DOWN ARROW -> MEDIA VOLUME DOWN
- *     FN + 'E' -> Open Email
- *     FN + 'C' -> Open Calculator
- *     FN + 'B' -> Open Browser
- *     FN + 'M' -> Open Consumer Control (Music)
+ *     FN + 'E'        -> Open Email
+ *     FN + 'C'        -> Open Calculator
+ *     FN + 'B'        -> Open Browser
+ *     FN + 'M'        -> Open Consumer Control (Music)
  */
  
 const uint32_t keys_alternate[] = { 
