@@ -98,15 +98,15 @@ MediaHID_t myMedia = {HID_MEDIA_ID};
 uint32_t Pressed[ROWS * COLS] = {0};
 uint32_t keyTimer[ROWS * COLS] = {0};
 #ifdef ENABLE_AUTOTYPER
-uint32_t autoTypeMode[ROWS * COLS] = {0};
+uint32_t autoPress[ROWS * COLS] = {0};
 #endif //ENABLE_AUTOTYPER
 
 void keyboardService() {
     static uint32_t update = 0;
     static uint32_t alternate = 0;
-    static uint32_t shit = 0;
+    static uint32_t autotype = 0;
     static uint32_t clean = 0;
-    static uint8_t shitActivate = 0;
+    static uint8_t autotypeActivate = 0;
     static uint32_t textPos = 0;
     static uint32_t npressed = 0;
 
@@ -128,12 +128,12 @@ void keyboardService() {
             }
 
             if (col_pressed) {
-                // shit mode toggle on press (press and release alt key and column 14 of each row simultaneously)
+                // autotype mode toggle on press (press and release alt key and column 14 of each row simultaneously)
                 if (j == 14) {
-                    shitActivate |= (1U << i);
-                    if ((shitActivate == 0x1f) && (alternate == 1)) {
-                        if (shit == 0U) shit = 2U;
-                        else if (shit == 3U) shit = 1U;
+                    autotypeActivate |= (1U << i);
+                    if ((autotypeActivate == 0x1f) && (alternate == 1)) {
+                        if (autotype == 0U) autotype = 2U;
+                        else if (autotype == 3U) autotype = 1U;
                     }
                 }
 
@@ -142,9 +142,9 @@ void keyboardService() {
 
 #ifdef ENABLE_AUTOTYPER
                 if(keys_alternate[pos] == 0 && alternate) {
-                    switch(autoTypeMode[pos]) {
-                        case 0: autoTypeMode[pos] = 2; break;
-                        case 3: autoTypeMode[pos] = 1; break;
+                    switch(autoPress[pos]) {
+                        case 0: autoPress[pos] = 2; break;
+                        case 3: autoPress[pos] = 1; break;
                         default: break;
                     }
                 }
@@ -162,7 +162,7 @@ void keyboardService() {
                     }
                 }
 #ifdef ENABLE_AUTOTYPER
-                if ((autoTypeMode[pos] == 3) && (Pressed[pos] != 0) && (thisTick - keyTimer[pos] >= TIMEOUT_MAX)) {
+                if ((autoPress[pos] == 3) && (Pressed[pos] != 0) && (thisTick - keyTimer[pos] >= TIMEOUT_MAX)) {
                     if (USBD_Keyboard_release(&myHID, &myMedia, Pressed[pos]) == Pressed[pos]) {
                         // update HID Type
                         update |= ((Pressed[pos] & KEY_TYPE_MASK) == KEY_TYPE_MEDIA) ? 8U : 4U;
@@ -176,22 +176,22 @@ void keyboardService() {
 #endif // ENABLE_AUTOTYPER
             } 
             if(!col_pressed) {
-                // shit mode toggle on release (press and release alt key and column 14 of each row simultaneously)
+                // autotype mode toggle on release (press and release alt key and column 14 of each row simultaneously)
                 if (j == 14) {
-                    shitActivate &= ~(1U << i);
-                    if (shitActivate == 0) {
-                        int prevShit = shit;
-                        if (shit == 2U) shit = 3U;
-                        else if (shit == 1U) shit = 0U;
-                        if (prevShit != shit) 
+                    autotypeActivate &= ~(1U << i);
+                    if (autotypeActivate == 0) {
+                        int prevautotype = autotype;
+                        if (autotype == 2U) autotype = 3U;
+                        else if (autotype == 1U) autotype = 0U;
+                        if (prevautotype != autotype) 
                             { clean = 1; textPos = 0; }
                     }
                 }
 
 #ifdef ENABLE_AUTOTYPER
-                switch(autoTypeMode[pos]) {
-                    case 2: autoTypeMode[pos] = 3; break;
-                    case 1: autoTypeMode[pos] = 0; break;
+                switch(autoPress[pos]) {
+                    case 2: autoPress[pos] = 3; break;
+                    case 1: autoPress[pos] = 0; break;
                     default: break;
                 }
 #endif // ENABLE_AUTOTYPER
@@ -218,17 +218,17 @@ void keyboardService() {
     }
 
 #ifdef ENABLE_AUTOTYPER
-    if (autoTypeMode[0] == 3)
+    if (autoPress[0] == 3)
         clean = 1;
 #endif // ENABLE_AUTOTYPER
     
-    static uint32_t shitTimer = 0;
-    if (shit == 3) {    // shit long press
-        if ((HAL_GetTick() - shitTimer >= 500) && npressed > 0) {
+    static uint32_t autotypeTimer = 0;
+    if (autotype == 3) {    // autotype long press
+        if ((HAL_GetTick() - autotypeTimer >= 500) && npressed > 0) {
             update |= 1U;
-            shitTimer = HAL_GetTick() - (500);
+            autotypeTimer = HAL_GetTick() - (500);
         } else if (npressed == 0) {
-            shitTimer = HAL_GetTick();
+            autotypeTimer = HAL_GetTick();
             textPos %= size_txt;
         }
     }
@@ -237,7 +237,7 @@ void keyboardService() {
     if (update & 3U) {
         if (clean) { // clean output
 #ifdef ENABLE_AUTOTYPER
-            memset(autoTypeMode, 0, sizeof(autoTypeMode));
+            memset(autoPress, 0, sizeof(autoPress));
 #endif // ENABLE_AUTOTYPER
             uint8_t tmp[9] = {HID_NORMAL_ID, 0, 0, 0, 0, 0, 0, 0, 0};
             uint8_t tmp1[3] = {HID_MEDIA_ID, 0, 0};
@@ -249,23 +249,23 @@ void keyboardService() {
                 ;
             clean = 0;
         }
-        if (((update & 1U) == 1U) && shit == 3) { // shit mode
+        if (((update & 1U) == 1U) && autotype == 3) { // autotype mode
             // new HID instance
-            KeyboardHID_t shitHID = {HID_NORMAL_ID, 0, 0, {0, 0, 0, 0, 0, 0}};
-            MediaHID_t shitMedia = {HID_MEDIA_ID, {0, 0}};
+            KeyboardHID_t autotypeHID = {HID_NORMAL_ID, 0, 0, {0, 0, 0, 0, 0, 0}};
+            MediaHID_t autotypeMedia = {HID_MEDIA_ID, {0, 0}};
             // press
             if (textPos < size_txt) {
-                USBD_Keyboard_press(&shitHID, &shitMedia, txt[textPos++]);
-                USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&shitHID, sizeof(shitHID));
+                USBD_Keyboard_press(&autotypeHID, &autotypeMedia, txt[textPos++]);
+                USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeHID, sizeof(autotypeHID));
                 while (USBD_Keyboard_State() != HID_IDLE)
                     ;
                 // release
-                USBD_Keyboard_releaseAll(&shitHID, &shitMedia);
-                USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&shitHID, sizeof(shitHID));
+                USBD_Keyboard_releaseAll(&autotypeHID, &autotypeMedia);
+                USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeHID, sizeof(autotypeHID));
                 while (USBD_Keyboard_State() != HID_IDLE)
                     ;
             }
-        } else if (shit == 0) { // normal mode
+        } else if (autotype == 0) { // normal mode
             if (update & 8U) {
                 myMedia.ID = HID_MEDIA_ID;
                 USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&myMedia, sizeof(myMedia));
