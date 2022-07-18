@@ -97,6 +97,7 @@ KeyboardHID_t myHID = {HID_NORMAL_ID};
 MediaHID_t myMedia = {HID_MEDIA_ID};
 uint32_t Pressed[ROWS * COLS] = {0};
 uint32_t keyTimer[ROWS * COLS] = {0};
+#define ENABLE_AUTOTYPER
 #ifdef ENABLE_AUTOTYPER
 uint32_t autoPress[ROWS * COLS] = {0};
 #endif //ENABLE_AUTOTYPER
@@ -346,8 +347,11 @@ int __attribute__((optimize("-O0"))) main(void) {
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        keyboardService();
-        HAL_Delay(0);
+        static uint32_t lastScan = 0UL;
+        if (lastScan != HAL_GetTick()) {
+            keyboardService();
+            lastScan = HAL_GetTick();
+        }
     }
     /* USER CODE END 3 */
 }
