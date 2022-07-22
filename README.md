@@ -1,6 +1,6 @@
 # STM32 Mechanical Keyboard
 
-a DIY attempt of a 68 key style mechanical keyboard.
+a DIY attempt of a 68 key style mechanical keyboard which not only looks cool, but can also scan at 1000 Hz
 
 click the image below to watch the build video on youtube.
 
