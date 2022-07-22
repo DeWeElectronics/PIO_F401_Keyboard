@@ -143,7 +143,7 @@ void keyboardService() {
                                 (uint8_t)keys_alternate[pos][0] : (uint8_t)keys[pos][0];
 
 #ifdef ENABLE_AUTOTYPER
-                if(keys_alternate[pos] == 0 && alternate) {
+                if(keys_alternate[pos][0] == 0 && alternate) {
                     switch(autoPress[pos]) {
                         case 0: autoPress[pos] = 2; break;
                         case 3: autoPress[pos] = 1; break;
@@ -304,8 +304,12 @@ volatile uint32_t LED_toggle = 0U;
 
 void __attribute__((optimize("-O0"))) HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
 
-    if (htim == &htim3)
-        GPIOC->ODR ^= (LED_toggle << 13U);
+    if (htim == &htim3) {
+        PinId_Write(PC13, !(!(USBD_Keyboard_State() == HID_IDLE) || PinId_Read(PC13)));
+        // PinId_Write(PC13, !((USBD_Keyboard_State() == HID_IDLE) && PinId_Read(PC13)));
+        // if (USBD_Keyboard_State() == HID_IDLE)
+        //     PinId_Toggle(PC13);
+    }
     // NVIC_DisableIRQ(TIM3_IRQn);
     // keyboardService();
     // NVIC_EnableIRQ(TIM3_IRQn);
@@ -345,8 +349,8 @@ int __attribute__((optimize("-O0"))) main(void) {
     MX_TIM3_Init();
     MX_USB_DEVICE_Init();
     /* USER CODE BEGIN 2 */
-    TIM3->PSC = (84000000 / 10000) - 1;
-    TIM3->ARR = (10000 / 1) - 1;
+    TIM3->PSC = (84000000 / 100000) - 1;
+    TIM3->ARR = (100000 / 10) - 1;
     // NVIC_SetPriority(OTG_FS_IRQn, 6);
     // NVIC_SetPriority(TIM3_IRQn, 67);
     HAL_TIM_Base_Start_IT(&htim3);
