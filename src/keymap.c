@@ -1,16 +1,16 @@
 #include "keymap.h"
 
 
-const uint32_t keys[] = {
-    KEY_ESC,        '1',      '2',      '3',     '4',      '5',      '6',      '7',      '8',      '9',      '0',      '-',        '=',             KEY_BACKSPACE,  '`',
-    KEY_TAB,        'q',      'w',      'e',     'r',      't',      'y',      'u',      'i',      'o',      'p',      '[',        ']',             '\\',           KEY_DELETE,
-    KEY_CAPS_LOCK,  'a',      's',      'd',     'f',      'g',      'h',      'j',      'k',      'l',      ';',      '\'',       0x00,            KEY_RETURN,     KEY_PAGE_UP,
-    KEY_LEFT_SHIFT, 'z',      'x',      'c',     'v',      'b',      'n',      'm',      ',',      '.',      '/',       0x00,      KEY_RIGHT_SHIFT, KEY_UP_ARROW,   KEY_PAGE_DOWN,
-    KEY_LEFT_CTRL,  KEY_LEFT_GUI, KEY_LEFT_ALT, 0x00, 0x00, ' ',     0x00,     0x00,     0x00, KEY_RIGHT_ALT, 0x00, KEY_RIGHT_CTRL, KEY_LEFT_ARROW, KEY_DOWN_ARROW, KEY_RIGHT_ARROW,
+const char* keys[] = {
+    STR_ESC,        "1",      "2",      "3",     "4",      "5",      "6",      "7",      "8",      "9",      "0",      "-",        "=",             STR_BACKSPACE,  "`",
+    STR_TAB,        "q",      "w",      "e",     "r",      "t",      "y",      "u",      "i",      "o",      "p",      "[",        "]",             "\\",           STR_DELETE,
+    STR_CAPS_LOCK,  "a",      "s",      "d",     "f",      "g",      "h",      "j",      "k",      "l",      ";",      "\'",       "\0",            STR_RETURN,     STR_PAGE_UP,
+    STR_LEFT_SHIFT, "z",      "x",      "c",     "v",      "b",      "n",      "m",      ",",      ".",      "/",       "\0",      STR_RIGHT_SHIFT, STR_UP_ARROW,   STR_PAGE_DOWN,
+    STR_LEFT_CTRL,  STR_LEFT_GUI, STR_LEFT_ALT, "\0", "\0", " ",     "\0",     "\0",     "\0", STR_RIGHT_ALT, "\0", STR_RIGHT_CTRL, STR_LEFT_ARROW, STR_DOWN_ARROW, STR_RIGHT_ARROW,
 };
 
 /*
- * when pressing FN key:
+ * when pressing FN STR:
  * F1 to F12: 
  *     FN + '1' -> F1
  *     FN + '2' -> F2
@@ -43,10 +43,10 @@ const uint32_t keys[] = {
  *     FN + 'M'        -> Open Consumer Control (Music)
  */
  
-const uint32_t keys_alternate[] = { 
-    0x00, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11,         KEY_F12,        KEY_MEDIA_STOP,     KEY_PRTSC, 
-    0x00, 0x00,   0x00,   KEY_MEDIA_EMAIL,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,    KEY_MEDIA_PREV,  KEY_MEDIA_NEXT, KEY_MEDIA_MUTE,     KEY_INSERT,
-    0x00, 0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,    0x00,            0x00,           KEY_MEDIA_PAUSE,    KEY_HOME,
-    0x00, 0x00,   0x00,   KEY_MEDIA_CALC,   0x00,   KEY_MEDIA_WWW_HOME,   0x00,   KEY_CONSUMER_CTL,   0x00,   0x00,   0x00,    0x00,            0x00,           KEY_MEDIA_VOLUP,    KEY_END,
-    0x00, 0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,   0x00,    0x00,            0x00,           KEY_MEDIA_VOLDN,    0x00,
+const char* keys_alternate[] = { 
+    "\0", STR_F1, STR_F2, STR_F3, STR_F4, STR_F5, STR_F6, STR_F7, STR_F8, STR_F9, STR_F10, STR_F11,         STR_F12,        STR_MEDIA_STOP,     STR_PRTSC, 
+    "\0", "\0",   "\0",   STR_MEDIA_EMAIL,   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",    STR_MEDIA_PREV,  STR_MEDIA_NEXT, STR_MEDIA_MUTE,     STR_INSERT,
+    "\0", "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",    "\0",            "\0",           STR_MEDIA_PAUSE,    STR_HOME,
+    "\0", "\0",   "\0",   STR_MEDIA_CALC,   "\0",   STR_MEDIA_WWW_HOME,   "\0",   STR_CONSUMER_CTL,   "\0",   "\0",   "\0",    "\0",            "\0",           STR_MEDIA_VOLUP,    STR_END,
+    "\0", "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",    "\0",            "\0",           STR_MEDIA_VOLDN,    "\0",
 };

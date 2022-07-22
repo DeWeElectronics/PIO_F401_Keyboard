@@ -81,7 +81,6 @@
 #define KEY_NUM_PLUS        (KEY_TYPE_KEYPAD | (uint32_t)0x0057UL)
 #define KEY_NUM_ENTER       (KEY_TYPE_KEYPAD | (uint32_t)0x0058UL)
 #define KEY_NUM_PERIOD      (KEY_TYPE_KEYPAD | (uint32_t)0x0063UL)
-#define KEY_NUM_102ND       (KEY_TYPE_KEYPAD | (uint32_t)0x0080UL)
 #define KEY_NUM_EQUAL       (KEY_TYPE_KEYPAD | (uint32_t)0x0067UL)
 
 
@@ -105,6 +104,90 @@ typedef uint32_t MediaKeyReport;
 #define KEY_CONSUMER_CTL            (KEY_TYPE_MEDIA | (MediaKeyReport) 0x0040UL)
 #define KEY_MEDIA_EMAIL             (KEY_TYPE_MEDIA | (MediaKeyReport) 0x0080UL)
 
+#define STR_LEFT_CTRL "\x80"
+#define STR_LEFT_SHIFT "\x81"
+#define STR_LEFT_ALT "\x82"
+#define STR_LEFT_GUI "\x83"
+#define STR_RIGHT_CTRL "\x84"
+#define STR_RIGHT_SHIFT "\x85"
+#define STR_RIGHT_ALT "\x86"
+#define STR_RIGHT_GUI "\x87"
+#define STR_UP_ARROW "\x88"
+#define STR_DOWN_ARROW "\x89"
+#define STR_LEFT_ARROW "\x8a"
+#define STR_RIGHT_ARROW "\x8b"
+#define STR_BACKSPACE "\x8c"
+#define STR_TAB "\x8d"
+#define STR_RETURN "\x8e"
+#define STR_ESC "\x8f"
+#define STR_INSERT "\x90"
+#define STR_PRTSC "\x91"
+#define STR_DELETE "\x92"
+#define STR_PAGE_UP "\x93"
+#define STR_PAGE_DOWN "\x94"
+#define STR_HOME "\x95"
+#define STR_END "\x96"
+#define STR_CAPS_LOCK "\x97"
+#define STR_NUM_LOCK "\x98"
+#define STR_F1 "\x99"
+#define STR_F2 "\x9a"
+#define STR_F3 "\x9b"
+#define STR_F4 "\x9c"
+#define STR_F5 "\x9d"
+#define STR_F6 "\x9e"
+#define STR_F7 "\x9f"
+#define STR_F8 "\xa0"
+#define STR_F9 "\xa1"
+#define STR_F10 "\xa2"
+#define STR_F11 "\xa3"
+#define STR_F12 "\xa4"
+#define STR_F13 "\xa5"
+#define STR_F14 "\xa6"
+#define STR_F15 "\xa7"
+#define STR_F16 "\xa8"
+#define STR_F17 "\xa9"
+#define STR_F18 "\xaa"
+#define STR_F19 "\xab"
+#define STR_F20 "\xac"
+#define STR_F21 "\xad"
+#define STR_F22 "\xae"
+#define STR_F23 "\xaf"
+#define STR_F24 "\xb0"
+#define STR_NUM_0 "\xb1"
+#define STR_NUM_1 "\xb2"
+#define STR_NUM_2 "\xb3"
+#define STR_NUM_3 "\xb4"
+#define STR_NUM_4 "\xb5"
+#define STR_NUM_5 "\xb6"
+#define STR_NUM_6 "\xb7"
+#define STR_NUM_7 "\xb8"
+#define STR_NUM_8 "\xb9"
+#define STR_NUM_9 "\xba"
+#define STR_NUM_SLASH "\xbb"
+#define STR_NUM_ASTERISK "\xbc"
+#define STR_NUM_MINUS "\xbd"
+#define STR_NUM_PLUS "\xbe"
+#define STR_NUM_ENTER "\xbf"
+#define STR_NUM_PERIOD "\xc0"
+#define STR_NUM_EQUAL "\xc1"
+#define STR_MEDIA_NEXT "\xc2"
+#define STR_MEDIA_PREV "\xc3"
+#define STR_MEDIA_STOP "\xc4"
+#define STR_MEDIA_PAUSE "\xc5"
+#define STR_MEDIA_MUTE "\xc6"
+#define STR_MEDIA_VOLUP "\xc7"
+#define STR_MEDIA_VOLDN "\xc8"
+#define STR_MEDIA_WWW_HOME "\xc9"
+#define STR_FILE_EXPLORER "\xca"
+#define STR_MEDIA_CALC "\xcb"
+#define STR_MEDIA_WWW_BOOKMARKS "\xcc"
+#define STR_MEDIA_WWW_SEARCH "\xcd"
+#define STR_MEDIA_WWW_STOP "\xce"
+#define STR_MEDIA_WWW_BACK "\xcf"
+#define STR_CONSUMER_CTL "\xd0"
+#define STR_MEDIA_EMAIL "\xd1"
+
+
 typedef struct
 {
     uint8_t ID;
@@ -125,5 +208,9 @@ void USBD_Keyboard_releaseAll(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid
 
 size_t Media_Press(MediaHID_t* pMediaHid, const MediaKeyReport k);
 size_t Media_Release(MediaHID_t* pMediaHid, const MediaKeyReport k);
+
+uint32_t USBD_Keyboard_str_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint8_t k);
+
+uint32_t USBD_Keyboard_str_release(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint8_t k);
 
 #endif //KEYBOARD_MAP_H

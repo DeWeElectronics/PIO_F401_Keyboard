@@ -11,7 +11,7 @@
 
 
 
-const uint32_t _asciimap[128] =
+const uint32_t _asciimap[] =
 {
     0x00U, // NUL
     0x00U, // SOH
@@ -140,7 +140,99 @@ const uint32_t _asciimap[128] =
     0x31U | SHIFT, // |
     0x30U | SHIFT, // }
     0x35U | SHIFT, // ~
-    0x00U             // DEL
+    0x00U,         // DEL
+    // MODIFIER
+    KEY_LEFT_CTRL,
+    KEY_LEFT_SHIFT,
+    KEY_LEFT_ALT, 
+    KEY_LEFT_GUI, 
+    KEY_RIGHT_CTRL, 
+    KEY_RIGHT_SHIFT, 
+    KEY_RIGHT_ALT, 
+    KEY_RIGHT_GUI, 
+    // NONPRINT
+    KEY_UP_ARROW,
+    KEY_DOWN_ARROW,
+    KEY_LEFT_ARROW,
+    KEY_RIGHT_ARROW,
+    KEY_BACKSPACE,
+    KEY_TAB,
+    KEY_RETURN,
+    KEY_ESC,
+    KEY_INSERT,
+    KEY_PRTSC,
+    KEY_DELETE,
+    KEY_PAGE_UP,
+    KEY_PAGE_DOWN,
+    KEY_HOME,
+    KEY_END,
+    KEY_CAPS_LOCK,
+    KEY_NUM_LOCK,
+
+    // F Keys
+    KEY_F1, 
+    KEY_F2, 
+    KEY_F3, 
+    KEY_F4, 
+    KEY_F5, 
+    KEY_F6, 
+    KEY_F7, 
+    KEY_F8, 
+    KEY_F9, 
+    KEY_F10, 
+    KEY_F11, 
+    KEY_F12, 
+    KEY_F13, 
+    KEY_F14, 
+    KEY_F15, 
+    KEY_F16, 
+    KEY_F17, 
+    KEY_F18, 
+    KEY_F19, 
+    KEY_F20, 
+    KEY_F21, 
+    KEY_F22, 
+    KEY_F23, 
+    KEY_F24, 
+
+    // KEYPAD
+    KEY_NUM_0,
+    KEY_NUM_1,
+    KEY_NUM_2,
+    KEY_NUM_3,
+    KEY_NUM_4,
+    KEY_NUM_5,
+    KEY_NUM_6,
+    KEY_NUM_7,
+    KEY_NUM_8,
+    KEY_NUM_9,
+    KEY_NUM_SLASH,
+    KEY_NUM_ASTERISK,
+    KEY_NUM_MINUS,
+    KEY_NUM_PLUS,
+    KEY_NUM_ENTER,
+    KEY_NUM_PERIOD,
+    KEY_NUM_EQUAL,
+
+    // MEDIA 1
+    KEY_MEDIA_NEXT,
+    KEY_MEDIA_PREV, 
+    KEY_MEDIA_STOP, 
+    KEY_MEDIA_PAUSE, 
+    KEY_MEDIA_MUTE, 
+    KEY_MEDIA_VOLUP, 
+    KEY_MEDIA_VOLDN, 
+    KEY_MEDIA_WWW_HOME, 
+    
+    // MEDIA 2
+    KEY_FILE_EXPLORER, 
+    KEY_MEDIA_CALC, 
+    KEY_MEDIA_WWW_BOOKMARKS, 
+    KEY_MEDIA_WWW_SEARCH, 
+    KEY_MEDIA_WWW_STOP, 
+    KEY_MEDIA_WWW_BACK, 
+    KEY_CONSUMER_CTL, 
+    KEY_MEDIA_EMAIL, 
 };
 
 size_t Media_Press(MediaHID_t* pMediaHid, const MediaKeyReport k)
@@ -166,6 +258,18 @@ size_t Media_Release(MediaHID_t* pMediaHid, const MediaKeyReport k)
     pMediaHid->KEYCODE[1] = (uint8_t)(mediaKeyReport_16 & 0x00FF);
 
     return 1;
+}
+
+uint32_t USBD_Keyboard_str_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint8_t k) {
+    uint32_t val = k;
+    if (val >= 128) val = _asciimap[k];
+    return USBD_Keyboard_press(pKeyboardHid, pMediaHid, val);
+}
+
+uint32_t USBD_Keyboard_str_release(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint8_t k) {
+    uint32_t val = k;
+    if (val >= 128) val = _asciimap[k];
+    return USBD_Keyboard_release(pKeyboardHid, pMediaHid, (k < 128)? k : _asciimap[k]);
 }
 
 uint32_t USBD_Keyboard_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint32_t k)

@@ -95,11 +95,11 @@ PinId_t* rowPins[ROWS] = {
 
 KeyboardHID_t myHID = {HID_NORMAL_ID};
 MediaHID_t myMedia = {HID_MEDIA_ID};
-uint32_t Pressed[ROWS * COLS] = {0};
+uint8_t Pressed[ROWS * COLS] = {0};
 uint32_t keyTimer[ROWS * COLS] = {0};
 #define ENABLE_AUTOTYPER
 #ifdef ENABLE_AUTOTYPER
-uint32_t autoPress[ROWS * COLS] = {0};
+uint8_t autoPress[ROWS * COLS] = {0};
 #endif //ENABLE_AUTOTYPER
 
 void keyboardService() {
@@ -139,7 +139,8 @@ void keyboardService() {
                 }
 
                 // if alternate mode is on and alternate key is defined
-                uint32_t key = (alternate && keys_alternate[pos] != 0) ? keys_alternate[pos] : keys[pos];
+                uint8_t key = (alternate && keys_alternate[pos] != 0) ? 
+                                (uint8_t)keys_alternate[pos][0] : (uint8_t)keys[pos][0];
 
 #ifdef ENABLE_AUTOTYPER
                 if(keys_alternate[pos] == 0 && alternate) {
@@ -155,8 +156,9 @@ void keyboardService() {
                 // if key of 'pos' is free and not in debounce timeout
                 // if (Pressed[pos] == 0 && TimeOut[pos] == 0) {
                 if (Pressed[pos] == 0 && (thisTick - keyTimer[pos] >= TIMEOUT_MS)) {
-                    if (USBD_Keyboard_press(&myHID, &myMedia, key) == key) {
-                        update |= ((key & KEY_TYPE_MASK) == KEY_TYPE_MEDIA) ? 8U : 4U; // update HID Type
+                    uint32_t keycode = 0UL;
+                    if ((keycode = USBD_Keyboard_str_press(&myHID, &myMedia, key))) {
+                        update |= ((keycode & KEY_TYPE_MASK) == KEY_TYPE_MEDIA) ? 8U : 4U; // update HID Type
                         update |= 1U;                                                  // update pressed flag
                         Pressed[pos] = key;                                            // assign key to pressed array
                         npressed++;
@@ -164,9 +166,10 @@ void keyboardService() {
                 }
 #ifdef ENABLE_AUTOTYPER
                 if ((autoPress[pos] == 3) && (Pressed[pos] != 0) && (thisTick - keyTimer[pos] >= TIMEOUT_MAX)) {
-                    if (USBD_Keyboard_release(&myHID, &myMedia, Pressed[pos]) == Pressed[pos]) {
+                    uint32_t keycode = 0UL;
+                    if ((keycode = USBD_Keyboard_str_release(&myHID, &myMedia, Pressed[pos]))) {
                         // update HID Type
-                        update |= ((Pressed[pos] & KEY_TYPE_MASK) == KEY_TYPE_MEDIA) ? 8U : 4U;
+                        update |= ((keycode & KEY_TYPE_MASK) == KEY_TYPE_MEDIA) ? 8U : 4U;
                         update |= 2U;              // update release flag
                         Pressed[pos] = 0;          // unassign key from pressed array
                         // TimeOut[pos] = TIMEOUT_MS; // set debounce timeout
@@ -199,9 +202,10 @@ void keyboardService() {
                 
                 // release key
                 if (Pressed[pos] != 0) { // if key[pos] is pressed
-                    if (USBD_Keyboard_release(&myHID, &myMedia, Pressed[pos]) == Pressed[pos]) {
+                    uint32_t keycode = 0UL;
+                    if ((keycode = USBD_Keyboard_str_release(&myHID, &myMedia, Pressed[pos]))) {
                         // update HID Type
-                        update |= ((Pressed[pos] & KEY_TYPE_MASK) == KEY_TYPE_MEDIA) ? 8U : 4U;
+                        update |= ((keycode & KEY_TYPE_MASK) == KEY_TYPE_MEDIA) ? 8U : 4U;
                         update |= 2U;              // update release flag
                         Pressed[pos] = 0;          // unassign key from pressed array
                         npressed--;
@@ -256,15 +260,27 @@ void keyboardService() {
             MediaHID_t autotypeMedia = {HID_MEDIA_ID, {0, 0}};
             // press
             if (textPos < size_txt) {
-                USBD_Keyboard_press(&autotypeHID, &autotypeMedia, txt[textPos++]);
-                USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeHID, sizeof(autotypeHID));
-                while (USBD_Keyboard_State() != HID_IDLE)
-                    ;
-                // release
-                USBD_Keyboard_releaseAll(&autotypeHID, &autotypeMedia);
-                USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeHID, sizeof(autotypeHID));
-                while (USBD_Keyboard_State() != HID_IDLE)
-                    ;
+                uint32_t type = USBD_Keyboard_str_press(&autotypeHID, &autotypeMedia, txt[textPos++]);
+                type = (type & KEY_TYPE_MASK) == KEY_TYPE_MEDIA;
+                if (type) {
+                    USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeMedia, sizeof(autotypeMedia));
+                    while (USBD_Keyboard_State() != HID_IDLE)
+                        ;
+                    // release
+                    USBD_Keyboard_releaseAll(&autotypeHID, &autotypeMedia);
+                    USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeMedia, sizeof(autotypeMedia));
+                    while (USBD_Keyboard_State() != HID_IDLE)
+                        ;
+                } else {
+                    USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeHID, sizeof(autotypeHID));
+                    while (USBD_Keyboard_State() != HID_IDLE)
+                        ;
+                    // release
+                    USBD_Keyboard_releaseAll(&autotypeHID, &autotypeMedia);
+                    USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeHID, sizeof(autotypeHID));
+                    while (USBD_Keyboard_State() != HID_IDLE)
+                        ;
+                }
             }
         } else if (autotype == 0) { // normal mode
             if (update & 8U) {
@@ -331,8 +347,8 @@ int __attribute__((optimize("-O0"))) main(void) {
     /* USER CODE BEGIN 2 */
     TIM3->PSC = (84000000 / 10000) - 1;
     TIM3->ARR = (10000 / 1) - 1;
-    NVIC_SetPriority(OTG_FS_IRQn, 6);
-    NVIC_SetPriority(TIM3_IRQn, 67);
+    // NVIC_SetPriority(OTG_FS_IRQn, 6);
+    // NVIC_SetPriority(TIM3_IRQn, 67);
     HAL_TIM_Base_Start_IT(&htim3);
 
     while (USBD_Keyboard_State() != HID_IDLE)
@@ -349,8 +365,8 @@ int __attribute__((optimize("-O0"))) main(void) {
         /* USER CODE BEGIN 3 */
         static uint32_t lastScan = 0UL;
         if (lastScan != HAL_GetTick()) {
-            keyboardService();
             lastScan = HAL_GetTick();
+            keyboardService();
         }
     }
     /* USER CODE END 3 */

@@ -4,7 +4,7 @@
 #include "stdint.h"
 #include "keyboard_usb.h"
 
-extern const uint32_t keys[];
-extern const uint32_t keys_alternate[];
+extern const char* keys[];
+extern const char* keys_alternate[];
 
 #endif
