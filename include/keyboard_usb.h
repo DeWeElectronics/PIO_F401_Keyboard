@@ -210,7 +210,6 @@ size_t Media_Press(MediaHID_t* pMediaHid, const MediaKeyReport k);
 size_t Media_Release(MediaHID_t* pMediaHid, const MediaKeyReport k);
 
 uint32_t USBD_Keyboard_str_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint8_t k);
-
 uint32_t USBD_Keyboard_str_release(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint8_t k);
 
 #endif //KEYBOARD_MAP_H
