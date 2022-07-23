@@ -97,7 +97,7 @@ KeyboardHID_t myHID = {HID_NORMAL_ID};
 MediaHID_t myMedia = {HID_MEDIA_ID};
 uint8_t Pressed[ROWS * COLS] = {0};
 uint32_t keyTimer[ROWS * COLS] = {0};
-#define ENABLE_AUTOTYPER
+//#define ENABLE_AUTOTYPER
 #ifdef ENABLE_AUTOTYPER
 uint8_t autoPress[ROWS * COLS] = {0};
 #endif //ENABLE_AUTOTYPER
