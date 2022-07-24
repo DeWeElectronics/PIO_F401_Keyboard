@@ -97,7 +97,7 @@ KeyboardHID_t myHID = {HID_NORMAL_ID};
 MediaHID_t myMedia = {HID_MEDIA_ID};
 uint8_t Pressed[ROWS * COLS] = {0};
 uint32_t keyTimer[ROWS * COLS] = {0};
-//#define ENABLE_AUTOTYPER
+// #define ENABLE_AUTOTYPER
 #ifdef ENABLE_AUTOTYPER
 uint8_t autoPress[ROWS * COLS] = {0};
 #endif //ENABLE_AUTOTYPER
@@ -139,7 +139,7 @@ void keyboardService() {
                 }
 
                 // if alternate mode is on and alternate key is defined
-                uint8_t key = (alternate && keys_alternate[pos] != 0) ? 
+                uint8_t key = (alternate && keys_alternate[pos][0] != 0) ? 
                                 (uint8_t)keys_alternate[pos][0] : (uint8_t)keys[pos][0];
 
 #ifdef ENABLE_AUTOTYPER
@@ -353,7 +353,9 @@ int __attribute__((optimize("-O0"))) main(void) {
     TIM3->ARR = (100000 / 10) - 1;
     // NVIC_SetPriority(OTG_FS_IRQn, 6);
     // NVIC_SetPriority(TIM3_IRQn, 67);
+    HAL_Delay(100);
     HAL_TIM_Base_Start_IT(&htim3);
+    HAL_Delay(100);
 
     while (USBD_Keyboard_State() != HID_IDLE)
         ;
