@@ -91,6 +91,7 @@ static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_HID_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx);
 static uint8_t USBD_HID_Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 static uint8_t USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum);
+static uint8_t USBD_HID_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum);
 
 static uint8_t *USBD_HID_GetFSCfgDesc(uint16_t *length);
 static uint8_t *USBD_HID_GetHSCfgDesc(uint16_t *length);
@@ -113,7 +114,7 @@ USBD_ClassTypeDef USBD_HID =
   NULL,              /* EP0_TxSent */
   NULL,              /* EP0_RxReady */
   USBD_HID_DataIn,   /* DataIn */
-  NULL,              /* DataOut */
+  USBD_HID_DataOut,  /* DataOut */
   NULL,              /* SOF */
   NULL,
   NULL,
@@ -146,7 +147,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgFSDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN
   USB_DESC_TYPE_INTERFACE,                            /* bDescriptorType: Interface descriptor type */
   0x00,                                               /* bInterfaceNumber: Number of Interface */
   0x00,                                               /* bAlternateSetting: Alternate setting */
-  0x01,                                               /* bNumEndpoints */
+  HID_NUM_EP,                                         /* bNumEndpoints */
   0x03,                                               /* bInterfaceClass: HID */
   0x00,                                               /* bInterfaceSubClass : 1=BOOT, 0=no boot */
   0x01,                                               /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
@@ -173,6 +174,14 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgFSDesc[USB_HID_CONFIG_DESC_SIZ] __ALIGN
   0x00,
   HID_FS_BINTERVAL,                                   /* bInterval: Polling Interval */
   /* 34 */
+
+  0x07,                                               /* bLength: Endpoint Descriptor size */
+  USB_DESC_TYPE_ENDPOINT,                             /* bDescriptorType: */
+  HID_EPOUT_ADDR,                                     /* bEndpointAddress: Endpoint Address (OUT) */
+  0x03,                                               /* bmAttributes: Interrupt Endpoint */
+  HID_EPOUT_SIZE,                                     /* wMaxPacketSize: 4 Byte max */
+  0x00,                                               
+  HID_FS_BINTERVAL                                    /* bInterval: Polling Interval (1ms) */
 };
 
 /* USB HID device HS Configuration Descriptor */
@@ -407,6 +416,25 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[] __ALIGN_END = {
     HIDINPUT(1), 0x02,           //   INPUT (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
     END_COLLECTION(0)            // END_COLLECTION
 };
+
+uint32_t nOutData;
+uint8_t OutDataBuffer[HID_EPOUT_SIZE];
+uint8_t OutData[HID_EPOUT_SIZE];
+
+__weak void USBD_HID_GetReport(uint8_t* OutData, int len) {
+
+}
+
+static uint8_t USBD_HID_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum) {
+    int len;
+    nOutData++;
+    len = USBD_LL_GetRxDataSize(pdev, epnum);
+    memcpy(OutDataBuffer, OutData, len);
+    USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, OutData, HID_EPOUT_SIZE);
+    USBD_HID_GetReport(OutDataBuffer, len);
+    return USBD_OK;
+}
+
 /**
   * @}
   */
@@ -449,8 +477,10 @@ static uint8_t USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 
   /* Open EP IN */
   (void)USBD_LL_OpenEP(pdev, HID_EPIN_ADDR, USBD_EP_TYPE_INTR, HID_EPIN_SIZE);
+  (void)USBD_LL_OpenEP(pdev, HID_EPOUT_ADDR, USBD_EP_TYPE_INTR, HID_EPOUT_SIZE);
   pdev->ep_in[HID_EPIN_ADDR & 0xFU].is_used = 1U;
-
+  pdev->ep_out[HID_EPOUT_ADDR & 0xFU].is_used = 1U;
+  USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, OutData, HID_EPOUT_SIZE);
   hhid->state = HID_IDLE;
 
   return (uint8_t)USBD_OK;
@@ -469,8 +499,11 @@ static uint8_t USBD_HID_DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 
   /* Close HID EPs */
   (void)USBD_LL_CloseEP(pdev, HID_EPIN_ADDR);
+  (void)USBD_LL_CloseEP(pdev, HID_EPOUT_ADDR);
   pdev->ep_in[HID_EPIN_ADDR & 0xFU].is_used = 0U;
   pdev->ep_in[HID_EPIN_ADDR & 0xFU].bInterval = 0U;
+  pdev->ep_out[HID_EPOUT_ADDR & 0xFU].is_used = 0U;
+  pdev->ep_out[HID_EPOUT_ADDR & 0xFU].bInterval = 0U;
 
   /* Free allocated memory */
   if (pdev->pClassData != NULL)

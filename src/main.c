@@ -302,6 +302,13 @@ void keyboardService() {
 
 volatile uint32_t LED_toggle = 0U;
 
+void USBD_HID_GetReport(uint8_t* OutData, int len) {
+    if (OutData[0] == 0x01) {
+        PinId_Write(PC14, OutData[1] & 1U);
+        PinId_Write(PC15, OutData[1] & 2U);
+    }
+}
+
 void __attribute__((optimize("-O0"))) HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
 
     if (htim == &htim3) {
@@ -506,7 +513,7 @@ static void MX_GPIO_Init(void) {
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /*Configure GPIO pin : PC13 */
-    GPIO_InitStruct.Pin = GPIO_PIN_13;
+    GPIO_InitStruct.Pin = GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
