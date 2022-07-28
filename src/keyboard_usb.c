@@ -269,7 +269,7 @@ uint32_t USBD_Keyboard_str_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMedia
 uint32_t USBD_Keyboard_str_release(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint8_t k) {
     uint32_t val = k;
     if (val >= 128) val = _asciimap[k];
-    return USBD_Keyboard_release(pKeyboardHid, pMediaHid, (k < 128)? k : _asciimap[k]);
+    return USBD_Keyboard_release(pKeyboardHid, pMediaHid, val);
 }
 
 uint32_t USBD_Keyboard_press(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHid, uint32_t k)
@@ -355,7 +355,7 @@ uint32_t USBD_Keyboard_release(KeyboardHID_t* pKeyboardHid, MediaHID_t* pMediaHi
 
     for (i = 0; i < 6; i++)
     {
-        if (pKeyboardHid->KEYCODE[i] == k)
+        if (pKeyboardHid->KEYCODE[i] == (uint8_t)k)
         {
             pKeyboardHid->KEYCODE[i] = 0;
             return retVal;
