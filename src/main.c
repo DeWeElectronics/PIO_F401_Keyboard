@@ -92,12 +92,44 @@ PinId_t* rowPins[ROWS] = {
 #define HID_MEDIA_ID 2U
 #define FN_KEY 70U
 
+void keyboard_init(PinId_t** p_rows, PinId_t** p_cols, uint16_t n_rows, uint16_t n_cols) {
+    
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+
+    for (uint16_t i = 0; i < n_cols; i++) {
+        GPIO_InitTypeDef tmp = {0};
+        tmp.Pin = p_cols[i]->pinmask;
+        tmp.Mode = GPIO_MODE_INPUT;
+        tmp.Pull = GPIO_PULLUP;
+        tmp.Alternate = 0U;
+        HAL_GPIO_Init(p_cols[i]->GPIOx, &tmp);
+    }
+
+    for (uint16_t i = 0; i < n_rows; i++) {
+        PinId_Write(p_rows[i], 1);
+        GPIO_InitTypeDef tmp = {0};
+        tmp.Pin = p_rows[i]->pinmask;
+        tmp.Mode = GPIO_MODE_OUTPUT_PP;
+        tmp.Pull = GPIO_NOPULL;
+        tmp.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        tmp.Alternate = 0U;
+        HAL_GPIO_Init(p_rows[i]->GPIOx, &tmp);
+    }
+}
+
+void keyboard_transmit(uint8_t* data, size_t size) {
+    while (USBD_Keyboard_State() != HID_IDLE)
+        ;
+    USBD_HID_SendReport(&hUsbDeviceFS, data, size);
+}
 
 KeyboardHID_t myHID = {HID_NORMAL_ID};
 MediaHID_t myMedia = {HID_MEDIA_ID};
 uint8_t Pressed[ROWS * COLS] = {0};
 uint32_t keyTimer[ROWS * COLS] = {0};
-// #define ENABLE_AUTOTYPER
+#define ENABLE_AUTOTYPER
 #ifdef ENABLE_AUTOTYPER
 uint8_t autoPress[ROWS * COLS] = {0};
 #endif //ENABLE_AUTOTYPER
@@ -246,12 +278,8 @@ void keyboardService() {
 #endif // ENABLE_AUTOTYPER
             uint8_t tmp[9] = {HID_NORMAL_ID, 0, 0, 0, 0, 0, 0, 0, 0};
             uint8_t tmp1[3] = {HID_MEDIA_ID, 0, 0};
-            USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)tmp, 9);
-            while (USBD_Keyboard_State() != HID_IDLE)
-                ;
-            USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)tmp1, 3);
-            while (USBD_Keyboard_State() != HID_IDLE)
-                ;
+            keyboard_transmit((uint8_t*)tmp, 9);
+            keyboard_transmit((uint8_t*)tmp1, 3);
             clean = 0;
         }
         if (((update & 1U) == 1U) && autotype == 3) { // autotype mode
@@ -263,37 +291,25 @@ void keyboardService() {
                 uint32_t type = USBD_Keyboard_str_press(&autotypeHID, &autotypeMedia, txt[textPos++]);
                 type = (type & KEY_TYPE_MASK) == KEY_TYPE_MEDIA;
                 if (type) {
-                    USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeMedia, sizeof(autotypeMedia));
-                    while (USBD_Keyboard_State() != HID_IDLE)
-                        ;
+                    keyboard_transmit((uint8_t*)&autotypeMedia, sizeof(autotypeMedia));
                     // release
                     USBD_Keyboard_releaseAll(&autotypeHID, &autotypeMedia);
-                    USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeMedia, sizeof(autotypeMedia));
-                    while (USBD_Keyboard_State() != HID_IDLE)
-                        ;
+                    keyboard_transmit((uint8_t*)&autotypeMedia, sizeof(autotypeMedia));
                 } else {
-                    USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeHID, sizeof(autotypeHID));
-                    while (USBD_Keyboard_State() != HID_IDLE)
-                        ;
+                    keyboard_transmit((uint8_t*)&autotypeHID, sizeof(autotypeHID));
                     // release
                     USBD_Keyboard_releaseAll(&autotypeHID, &autotypeMedia);
-                    USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&autotypeHID, sizeof(autotypeHID));
-                    while (USBD_Keyboard_State() != HID_IDLE)
-                        ;
+                    keyboard_transmit((uint8_t*)&autotypeHID, sizeof(autotypeHID));
                 }
             }
         } else if (autotype == 0) { // normal mode
             if (update & 8U) {
                 myMedia.ID = HID_MEDIA_ID;
-                USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&myMedia, sizeof(myMedia));
-                while (USBD_Keyboard_State() != HID_IDLE)
-                    ;
+                keyboard_transmit((uint8_t*)&myMedia, sizeof(myMedia));
             }
             if (update & 4U) {
                 myHID.ID = HID_NORMAL_ID;
-                USBD_HID_SendReport(&hUsbDeviceFS, (uint8_t*)&myHID, sizeof(myHID));
-                while (USBD_Keyboard_State() != HID_IDLE)
-                    ;
+                keyboard_transmit((uint8_t*)&myHID, sizeof(myHID));
             }
         }
         update = 0;
@@ -354,15 +370,16 @@ int __attribute__((optimize("-O0"))) main(void) {
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_TIM3_Init();
+    HAL_Delay(50);
     MX_USB_DEVICE_Init();
+    HAL_Delay(50);
     /* USER CODE BEGIN 2 */
-    TIM3->PSC = (84000000 / 100000) - 1;
-    TIM3->ARR = (100000 / 10) - 1;
+    keyboard_init(rowPins, colPins, ROWS, COLS);
+    TIM3->PSC = (84000000 / 10000) - 1;
+    TIM3->ARR = (10000 / 1) - 1;
     // NVIC_SetPriority(OTG_FS_IRQn, 6);
     // NVIC_SetPriority(TIM3_IRQn, 67);
-    HAL_Delay(100);
     HAL_TIM_Base_Start_IT(&htim3);
-    HAL_Delay(100);
 
     while (USBD_Keyboard_State() != HID_IDLE)
         ;
@@ -479,38 +496,38 @@ static void MX_GPIO_Init(void) {
     __HAL_RCC_GPIOC_CLK_ENABLE();
 
     /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_15, GPIO_PIN_SET);
+    // HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_15, GPIO_PIN_SET);
 
     /*Configure GPIO pin Output Level */
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET);
+    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET);
 
     /*Configure GPIO pins : PA0 PA1 PA2 PA3
                              PA4 PA5 PA6 PA7 */
-    GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    // GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
+    // GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    // GPIO_InitStruct.Pull = GPIO_PULLUP;
+    // HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /*Configure GPIO pins : PB0 PB4 PB5 PB6
                              PB7 PB8 PB9 */
-    GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    // GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
+    // GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    // GPIO_InitStruct.Pull = GPIO_PULLUP;
+    // HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /*Configure GPIO pins : PA8 PA9 PA10 PA15 */
-    GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_15;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    // GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_15;
+    // GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    // GPIO_InitStruct.Pull = GPIO_NOPULL;
+    // GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    // HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /*Configure GPIO pin : PB3 */
-    GPIO_InitStruct.Pin = GPIO_PIN_3;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    // GPIO_InitStruct.Pin = GPIO_PIN_3;
+    // GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    // GPIO_InitStruct.Pull = GPIO_NOPULL;
+    // GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    // HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /*Configure GPIO pin : PC13 */
     GPIO_InitStruct.Pin = GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
