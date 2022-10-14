@@ -46,7 +46,7 @@ const char* keys[] = {
 const char* keys_alternate[] = { 
     "\0", STR_F1, STR_F2, STR_F3, STR_F4, STR_F5, STR_F6, STR_F7, STR_F8, STR_F9, STR_F10, STR_F11,         STR_F12,        STR_MEDIA_STOP,     STR_PRTSC, 
     "\0", "\0",   "\0",   STR_MEDIA_EMAIL,   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",    STR_MEDIA_PREV,  STR_MEDIA_NEXT, STR_MEDIA_MUTE,     STR_INSERT,
-    "\0", "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",    "\0",            "\0",           STR_MEDIA_PAUSE,    STR_HOME,
-    "\0", "\0",   "\0",   STR_MEDIA_CALC,   "\0",   STR_MEDIA_WWW_HOME,   STR_NUM_LOCK,   STR_CONSUMER_CTL,   "\0",   "\0",   "\0",    "\0",            "\0",           STR_MEDIA_VOLUP,    STR_END,
+    STR_NUM_LOCK, "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",    "\0",            "\0",           STR_MEDIA_PAUSE,    STR_HOME,
+    "\0", "\0",   "\0",   STR_MEDIA_CALC,   "\0",   STR_MEDIA_WWW_HOME,   "\0",   STR_CONSUMER_CTL,   "\0",   "\0",   "\0",    "\0",            "\0",           STR_MEDIA_VOLUP,    STR_END,
     "\0", "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",   "\0",    "\0",            "\0",           STR_MEDIA_VOLDN,    "\0",
 };
